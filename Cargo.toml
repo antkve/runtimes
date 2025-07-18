@@ -195,7 +195,7 @@ frame-metadata-hash-extension = { version = "0.7.0", default-features = false }
 remote-externalities = { version = "0.49.0", package = "frame-remote-externalities" }
 runtime-parachains = { version = "18.1.0", default-features = false, package = "polkadot-runtime-parachains" }
 sc-chain-spec = { version = "41.0.0" }
-sc-network = { version = "0.48.3" }
+sc-network = { version = "0.50.0" }
 scale-info = { version = "2.10.0", default-features = false }
 separator = { version = "0.4.1" }
 serde = { version = "1.0.196" }

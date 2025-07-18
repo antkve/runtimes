@@ -12,7 +12,7 @@ function init_bulletin_polkadot() {
         --source-version-mode Auto \
         --target-uri ws://localhost:9910 \
         --target-version-mode Auto \
-        --target-signer //Bob \
+        --target-signer //Alice \
         --target-transactions-mortality 4
 }
 
@@ -39,7 +39,7 @@ function run_finality_relay() {
       --source-version-mode Auto \
       --target-uri ws://localhost:9910 \
       --target-version-mode Auto \
-      --target-signer //Bob \
+      --target-signer //Alice \
       --target-transactions-mortality 4 &
 
   RUST_LOG=rpc=trace,bridge=trace \
@@ -92,28 +92,6 @@ function run_messages_relay() {
         --target-version-mode Auto \
         --target-signer //Alice \
         --target-transactions-mortality 4 \
-        --lane 00000000
-}
-
-function run_relay() {
-    echo OK
-    local RELAYER_BINARY_PATH=$(ensure_relayer)
-
-    RUST_LOG=rpc=trace,bridge=trace \
-        $RELAYER_BINARY_PATH relay-headers-and-messages polkadot-bulletin-people-hub-polkadot \
-        --polkadot-bulletin-host localhost \
-        --polkadot-bulletin-port 10000 \
-        --polkadot-bulletin-version-mode Auto \
-        --polkadot-bulletin-signer //Alice \
-        --polkadot-bulletin-transactions-mortality 4 \
-        --polkadot-host localhost \
-        --polkadot-port 9942 \
-        --polkadot-version-mode Auto \
-        --people-hub-polkadot-host localhost \
-        --people-hub-polkadot-port 9910 \
-        --people-hub-polkadot-version-mode Auto \
-        --people-hub-polkadot-signer //Charlie \
-        --people-hub-polkadot-transactions-mortality 4 \
         --lane 00000000
 }
 

@@ -122,6 +122,10 @@ cat "$script_dir/chain-spec-plain.json" | jq --rawfile code "$script_dir/rt-hex.
                     }
             ]
         ]' \
+        | jq 'if .genesis.runtimeGenesis.patch
+    then .genesis.runtimeGenesis.patch.bridgePolkadotBulletinGrandpa.owner = "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY"
+    else .
+    end' \
     > "$script_dir/edited-chain-spec-plain.json"
 
 # build a raw spec

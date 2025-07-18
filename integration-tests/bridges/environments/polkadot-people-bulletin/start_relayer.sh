@@ -30,7 +30,7 @@ echo -e "Starting polkadot-bulletin messages relayer. Logs available at: $messag
 start_background_process "$helper_script run-messages-relay" $messages_relayer_log messages_relayer_pid
 
 run_zndsl ${BASH_SOURCE%/*}/polkadot-bridge.zndsl $polkadot_dir
-run_zndsl ${BASH_SOURCE%/*}/bulletin-bridge.zndsl $bulletin_dir
+
 eval $__finality_relayer_pid="'$finality_relayer_pid'"
 eval $__parachains_relayer_pid="'$parachains_relayer_pid'"
 eval $__messages_relayer_pid="'$messages_relayer_pid'"
