@@ -51,6 +51,7 @@ sp-session = { workspace = true }
 sp-storage = { workspace = true }
 sp-transaction-pool = { workspace = true }
 sp-version = { workspace = true }
+sp-keyring = { workspace = true }
 
 # Polkadot
 pallet-xcm = { workspace = true }
@@ -99,6 +100,7 @@ pallet-sudo = { workspace = true }
 
 [dev-dependencies]
 parachains-runtimes-test-utils = { workspace = true }
+bridge-hub-test-utils = { workspace = true }
 
 [build-dependencies]
 substrate-wasm-builder = { optional = true, workspace = true }
