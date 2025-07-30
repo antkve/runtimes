@@ -16,11 +16,11 @@
 
 use crate::{
 	bridge_common_config::{
-		BridgeGrandpaPolkadotBulletinInstance, RelayersForLegacyLaneIdsMessagesInstance,
+		BridgeGrandpaPolkadotBulletinInstance, BridgeRelayersInstance,
 	},
 	bridge_to_bulletin_config::WithPolkadotBulletinMessagesInstance,
 	bridge_to_bulletin_config::{
-		PolkadotBulletinGlobalConsensusNetwork, PolkadotBulletinGlobalConsensusNetworkLocation,
+		PolkadotBulletinGlobalConsensusNetworkLocation,
 		XcmOverPolkadotBulletinInstance,
 	},
 	xcm_config::{LocationToAccountId, XcmConfig},
@@ -50,7 +50,7 @@ pub const SIBLING_PARACHAIN_ID: u32 = 1000;
 
 parameter_types! {
 	pub SiblingParachainLocation: Location = Location::new(1, [Parachain(SIBLING_PARACHAIN_ID)]);
-	pub BridgedUniversalLocation: InteriorLocation = [GlobalConsensus(PolkadotBulletinGlobalConsensusNetwork::get())].into();
+	pub BridgedUniversalLocation: InteriorLocation = [GlobalConsensus(bp_polkadot_bulletin::PolkadotBulletinGlobalConsensusNetwork::get())].into();
 	pub TestNetworkId: NetworkId = NetworkId::Polkadot;
 }
 
@@ -86,7 +86,7 @@ fn handle_export_message_from_system_parachain_add_to_outbound_queue_works() {
 				_ => None,
 			}
 		}),
-		|| ExportMessage { network: PolkadotBulletinGlobalConsensusNetwork::get(), destination: Here.into(), xcm: Xcm(vec![]) },
+		|| ExportMessage { network: bp_polkadot_bulletin::PolkadotBulletinGlobalConsensusNetwork::get(), destination: Here.into(), xcm: Xcm(vec![]) },
 		Some((Location::parent(), ExistentialDeposit::get()).into()),
 		Some((Location::parent(), 1_000_000_000).into()),
 		|| {
@@ -121,7 +121,7 @@ fn message_dispatch_routing_works() {
 		ParachainSystem,
 		WithPolkadotBulletinMessagesInstance,
 		TestNetworkId,
-		PolkadotBulletinGlobalConsensusNetwork,
+		bp_polkadot_bulletin::PolkadotBulletinGlobalConsensusNetwork,
 		ConstU8<2>,
 	>(
 		collator_session_keys(),
@@ -260,7 +260,7 @@ type GrandpaRuntimeTestsAdapter = from_grandpa_chain::WithRemoteGrandpaChainHelp
 	AllPalletsWithoutSystem,
 	BridgeGrandpaPolkadotBulletinInstance,
 	WithPolkadotBulletinMessagesInstance,
-	RelayersForLegacyLaneIdsMessagesInstance,
+	BridgeRelayersInstance,
 >;
 
 #[test]
