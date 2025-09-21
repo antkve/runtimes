@@ -3,6 +3,27 @@
 # import common functions
 source "$FRAMEWORK_PATH/utils/bridges.sh"
 
+
+function generate_hex_encoded_call_data() {
+    local type=$1
+    local endpoint=$2
+    local output=$3
+    shift
+    shift
+    shift
+    echo "Input params: $@"
+
+    node ${FRAMEWORK_PATH%/*}/utils/generate_hex_encoded_call "$type" "$endpoint" "$output" "$@"
+    local retVal=$?
+
+    if [ $type != "check" ]; then
+        local hex_encoded_data=$(cat $output)
+        echo "Generated hex-encoded bytes to file '$output': $hex_encoded_data"
+    fi
+
+    return $retVal
+}
+
 function init_bulletin_polkadot() {
     local RELAYER_BINARY_PATH=$(ensure_relayer)
 
