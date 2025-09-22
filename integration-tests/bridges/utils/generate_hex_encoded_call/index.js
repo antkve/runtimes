@@ -120,6 +120,69 @@ function forceXcmVersion(endpoint, outputFile, dest, xcm_version) {
 		});
 }
 
+function addBulletinValidator(endpoint, outputFile, validator_id) {
+	console.log(`Generating addBulletinValidator from RPC endpoint: ${endpoint} to outputFile: ${outputFile}, validator_id: ${validator_id}`);
+	connect(endpoint)
+		.then((api) => {
+			const call = api.tx.validatorSet.addValidator(validator_id);
+			writeHexEncodedBytesToOutput(call.method, outputFile);
+			exit(0);
+		})
+		.catch((e) => {
+			console.error(e);
+			exit(1);
+		});
+}
+
+function peopleXcmSendToBulletin(endpoint, outputFile, bulletin_xcm_call_hex) {
+	console.log(`Generating peopleXcmSendToBulletin from RPC endpoint: ${endpoint} to outputFile: ${outputFile}, bulletin_xcm_call_hex: ${bulletin_xcm_call_hex}`);
+	connect(endpoint)
+		.then((api) => {
+			// Destination: Location::new(2, [GlobalConsensus(PolkadotBulletin)])
+			const dest = {
+				"V5": {
+					"parents": 2,
+					"interior": {
+						"X1": [
+							{ "GlobalConsensus": "PolkadotBulletin" }
+						]
+					}
+				}
+			};
+
+			// XCM message to Bulletin chain: UnpaidExecution + Transact with ValidatorSet::add
+			const xcm_message = {
+				"V5": [
+					{
+						"UnpaidExecution": {
+							"weight_limit": "Unlimited"
+						}
+					},
+					{
+						"Transact": {
+							"origin_kind": "Superuser",
+							"require_weight_at_most": {
+								"ref_time": "200000000",
+								"proof_size": "12000"
+							},
+							"call": {
+								"encoded": JSON.parse(bulletin_xcm_call_hex)
+							}
+						}
+					}
+				]
+			};
+
+			const call = api.tx.polkadotXcm.send(dest, xcm_message);
+			writeHexEncodedBytesToOutput(call.method, outputFile);
+			exit(0);
+		})
+		.catch((e) => {
+			console.error(e);
+			exit(1);
+		});
+}
+
 if (!process.argv[2] || !process.argv[3]) {
 	console.log("usage: node ./script/generate_hex_encoded_call <type> <endpoint> <output hex-encoded data file> <input message>");
 	exit(1);
@@ -156,6 +219,12 @@ switch (type) {
 		break;
 	case 'force-xcm-version':
 		forceXcmVersion(rpcEndpoint, output, inputArgs[0], inputArgs[1]);
+		break;
+	case 'add-bulletin-validator':
+		addBulletinValidator(rpcEndpoint, output, inputArgs[0]);
+		break;
+	case 'people-xcm-send-to-bulletin':
+		peopleXcmSendToBulletin(rpcEndpoint, output, inputArgs[0]);
 		break;
 	case 'check':
 		console.log(`Checking nodejs installation, if you see this everything is ready!`);
