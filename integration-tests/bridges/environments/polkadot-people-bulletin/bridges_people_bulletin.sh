@@ -311,14 +311,6 @@ case "$1" in
      data=$4
      send_data "$url" "$seed" "$data"
      ;;
-  store-data)
-    # TODO: replace with something useful
-    # store data on bulletin
-    url=$2
-    seed=$3
-    data=$4
-    store_data_with_bulletin "$url" "$seed" "$data"
-    ;;
   add-validator-to-bulletin)
     ensure_js_api
     relay_url=$2
