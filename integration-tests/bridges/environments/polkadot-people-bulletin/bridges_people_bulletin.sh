@@ -3,6 +3,35 @@
 # import common functions
 source "$FRAMEWORK_PATH/utils/bridges.sh"
 
+function ensure_js_api() {
+    if ! which polkadot-js-api &> /dev/null; then
+        echo ''
+        echo 'Required command `polkadot-js-api` not in PATH, please, install, e.g.:'
+        echo "npm install -g @polkadot/api-cli@beta"
+        echo "      or"
+        echo "yarn global add @polkadot/api-cli"
+        echo ''
+        exit 1
+    fi
+    if ! which jq &> /dev/null; then
+        echo ''
+        echo 'Required command `jq` not in PATH, please, install, e.g.:'
+        echo "apt install -y jq"
+        echo ''
+        exit 1
+    fi
+    generate_hex_encoded_call_data "check" "--"
+    local retVal=$?
+    if [ $retVal -ne 0 ]; then
+        echo ""
+        echo ""
+        echo "-------------------"
+        echo "Installing (nodejs) sub module: ${BASH_SOURCE%/*}/generate_hex_encoded_call"
+        pushd ${BASH_SOURCE%/*}/generate_hex_encoded_call
+        npm install
+        popd
+    fi
+}
 
 function generate_hex_encoded_call_data() {
     local type=$1
@@ -12,9 +41,8 @@ function generate_hex_encoded_call_data() {
     shift
     shift
     echo "Input params: $@"
-    echo "Env params: ${ENV_PATH}"
 
-    node ${ENV_PATH}/generate_hex_encoded_call "$type" "$endpoint" "$output" "$@" 2>&1
+    node ${BASH_SOURCE%/*}/generate_hex_encoded_call "$type" "$endpoint" "$output" "$@" 2>&1
     local retVal=$?
 
     if [ $type != "check" ]; then
@@ -292,6 +320,7 @@ case "$1" in
     store_data_with_bulletin "$url" "$seed" "$data"
     ;;
   add-validator-to-bulletin)
+    ensure_js_api
     relay_url=$2
     relay_chain_seed=$3
     people_para_id=$4
@@ -301,6 +330,7 @@ case "$1" in
     add_validator_to_bulletin "$relay_url" "$relay_chain_seed" "$people_para_id" "$people_chain_endpoint" "$bulletin_chain_endpoint" "$validator_id"
     ;;
   store-data-to-bulletin)
+    ensure_js_api
     relay_url=$2
     relay_chain_seed=$3
     people_para_id=$4
@@ -310,6 +340,7 @@ case "$1" in
     store_data_to_bulletin "$relay_url" "$relay_chain_seed" "$people_para_id" "$people_chain_endpoint" "$bulletin_chain_endpoint" "$data"
     ;;
   authorize-account-on-bulletin)
+    ensure_js_api
     relay_url=$2
     relay_chain_seed=$3
     people_para_id=$4
