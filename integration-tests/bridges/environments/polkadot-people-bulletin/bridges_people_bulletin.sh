@@ -13,7 +13,7 @@ function generate_hex_encoded_call_data() {
     shift
     echo "Input params: $@"
 
-    node ${FRAMEWORK_PATH%/*}/utils/generate_hex_encoded_call "$type" "$endpoint" "$output" "$@"
+    node ${ENV_PATH}/generate_hex_encoded_call "$type" "$endpoint" "$output" "$@"
     local retVal=$?
 
     if [ $type != "check" ]; then
