@@ -163,8 +163,8 @@ function add_validator_to_bulletin() {
     echo "--------------------------------------------------"
 
     # Create temporary files for hex encoded data
-    local tmp_bulletin_call_file="/tmp/bulletin_add_validator_call.hex"
-    local tmp_people_call_file="/tmp/people_xcm_send_call.hex"
+    local tmp_bulletin_call_file=$(mktemp)
+    local tmp_people_call_file=$(mktemp)
 
     # Step 1: Generate hex encoded call for ValidatorSet::add on Bulletin chain
     generate_hex_encoded_call_data "add-bulletin-validator" "${bulletin_chain_endpoint}" "${tmp_bulletin_call_file}" "$validator_id"
@@ -202,8 +202,8 @@ function store_data_to_bulletin() {
     echo ""
     echo "--------------------------------------------------"
 
-    local tmp_bulletin_call_file="/tmp/bulletin_storage_store_call.hex"
-    local tmp_people_call_file="/tmp/people_xcm_storage_store_call.hex"
+    local tmp_bulletin_call_file=$(mktemp)
+    local tmp_people_call_file=$(mktemp)
 
     generate_hex_encoded_call_data "bulletin-transaction-storage-store" "${bulletin_chain_endpoint}" "${tmp_bulletin_call_file}" "$data"
     local bulletin_call_hex=$(cat $tmp_bulletin_call_file)
@@ -236,8 +236,8 @@ function authorize_account_on_bulletin() {
     echo ""
     echo "--------------------------------------------------"
 
-    local tmp_bulletin_call_file="/tmp/bulletin_authorize_account_call.hex"
-    local tmp_people_call_file="/tmp/people_xcm_authorize_account_call.hex"
+    local tmp_bulletin_call_file=$(mktemp)
+    local tmp_people_call_file=$(mktemp)
 
     generate_hex_encoded_call_data "bulletin-transaction-storage-authorize-account" "${bulletin_chain_endpoint}" "${tmp_bulletin_call_file}" "$account_to_authorize"
     local bulletin_call_hex=$(cat $tmp_bulletin_call_file)
