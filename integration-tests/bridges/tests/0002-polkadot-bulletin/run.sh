@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Test that checks if asset transfer works on P<>K bridge.
+# Test suite for Polkadot-People-Bulletin bridge governance XCM calls.
 # This test is intentionally not added to the CI. It is meant to be ran manually.
 
 set -e
@@ -9,6 +9,7 @@ source "$FRAMEWORK_PATH/utils/common.sh"
 source "$FRAMEWORK_PATH/utils/zombienet.sh"
 
 export ENV_PATH=`realpath ${BASH_SOURCE%/*}/../../environments/polkadot-people-bulletin`
+export DATA_FOR_BULLETIN="0x48656c6c6f20576f726c64"  # "Hello World" in hex
 
 $ENV_PATH/spawn.sh --init --start-relayer &
 env_pid=$!
@@ -21,8 +22,19 @@ ensure_process_file $env_pid $TEST_DIR/bulletin.env 300
 bulletin_dir=`cat $TEST_DIR/bulletin.env`
 echo
 
-run_zndsl ${BASH_SOURCE%/*}/store-data-from-people.zndsl $polkadot_dir
+echo "--- Test 1: Add validator to bulletin via governance XCM ---"
+run_zndsl ${BASH_SOURCE%/*}/add-validator-to-bulletin.zndsl $polkadot_dir
 
+echo "--- Test 2: Authorize account on bulletin via governance XCM ---"
+run_zndsl ${BASH_SOURCE%/*}/authorize-account-on-bulletin.zndsl $polkadot_dir
+
+echo "--- Test 3: Store data to bulletin via governance XCM ---"
+run_zndsl ${BASH_SOURCE%/*}/store-data-to-bulletin-governance.zndsl $polkadot_dir
+
+echo "--- Test 4: Comprehensive governance XCM test ---"
+run_zndsl ${BASH_SOURCE%/*}/governance-xcm-bulletin.zndsl $polkadot_dir
+
+echo "All tests completed successfully!"
 echo "TODO: let's run forever and replace this with some asserts (wait for MessageProcessed...) in store-data-from-people.zndsl"
 
 while true; do

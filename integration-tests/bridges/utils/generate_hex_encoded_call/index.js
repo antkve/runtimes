@@ -183,6 +183,34 @@ function peopleXcmSendToBulletin(endpoint, outputFile, bulletin_xcm_call_hex) {
 		});
 }
 
+function bulletinTransactionStorageStore(endpoint, outputFile, data) {
+	console.log(`Generating bulletinTransactionStorageStore from RPC endpoint: ${endpoint} to outputFile: ${outputFile}, data: ${data}`);
+	connect(endpoint)
+		.then((api) => {
+			const call = api.tx.transactionStorage.store(data);
+			writeHexEncodedBytesToOutput(call.method, outputFile);
+			exit(0);
+		})
+		.catch((e) => {
+			console.error(e);
+			exit(1);
+		});
+}
+
+function bulletinTransactionStorageAuthorizeAccount(endpoint, outputFile, who) {
+	console.log(`Generating bulletinTransactionStorageAuthorizeAccount from RPC endpoint: ${endpoint} to outputFile: ${outputFile}, who: ${who}`);
+	connect(endpoint)
+		.then((api) => {
+			const call = api.tx.transactionStorage.authorizeAccount(who);
+			writeHexEncodedBytesToOutput(call.method, outputFile);
+			exit(0);
+		})
+		.catch((e) => {
+			console.error(e);
+			exit(1);
+		});
+}
+
 if (!process.argv[2] || !process.argv[3]) {
 	console.log("usage: node ./script/generate_hex_encoded_call <type> <endpoint> <output hex-encoded data file> <input message>");
 	exit(1);
@@ -225,6 +253,12 @@ switch (type) {
 		break;
 	case 'people-xcm-send-to-bulletin':
 		peopleXcmSendToBulletin(rpcEndpoint, output, inputArgs[0]);
+		break;
+	case 'bulletin-transaction-storage-store':
+		bulletinTransactionStorageStore(rpcEndpoint, output, inputArgs[0]);
+		break;
+	case 'bulletin-transaction-storage-authorize-account':
+		bulletinTransactionStorageAuthorizeAccount(rpcEndpoint, output, inputArgs[0]);
 		break;
 	case 'check':
 		console.log(`Checking nodejs installation, if you see this everything is ready!`);
