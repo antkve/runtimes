@@ -1,5 +1,5 @@
-async function run(nodeName, networkInfo, index) {
-    const { wsUri, userDefinedTypes } = networkInfo.nodesByName[nodeName];
+async function run(nodeName, networkInfo, args) {
+    const {wsUri, userDefinedTypes} = networkInfo.nodesByName[nodeName];
     const api = await zombie.connect(wsUri, userDefinedTypes);
 
     await zombie.util.cryptoWaitReady();

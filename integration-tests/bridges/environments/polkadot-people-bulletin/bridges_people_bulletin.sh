@@ -220,7 +220,9 @@ function authorize_account_on_bulletin() {
     local people_chain_endpoint=$4
     local bulletin_chain_endpoint=$5
     local account_to_authorize=$6
-    
+    local transactions=$7
+    local bytes=$8
+
     echo "  calling authorize_account_on_bulletin:"
     echo "      relay_url: ${relay_url}"
     echo "      relay_chain_seed: ${relay_chain_seed}"
@@ -228,13 +230,14 @@ function authorize_account_on_bulletin() {
     echo "      people_chain_endpoint: ${people_chain_endpoint}"
     echo "      bulletin_chain_endpoint: ${bulletin_chain_endpoint}"
     echo "      account_to_authorize: ${account_to_authorize}"
-    echo ""
+    echo "      transactions: ${transactions}"
+    echo "      bytes: ${bytes}"
     echo "--------------------------------------------------"
 
     local tmp_bulletin_call_file=$(mktemp)
     local tmp_people_call_file=$(mktemp)
 
-    generate_hex_encoded_call_data "bulletin-transaction-storage-authorize-account" "${bulletin_chain_endpoint}" "${tmp_bulletin_call_file}" "$account_to_authorize" 1 512
+    generate_hex_encoded_call_data "bulletin-transaction-storage-authorize-account" "${bulletin_chain_endpoint}" "${tmp_bulletin_call_file}" "$account_to_authorize" "$transactions" "$bytes"
     local bulletin_call_hex=$(cat $tmp_bulletin_call_file)
     echo "Generated Bulletin transactionStorage.authorizeAccount call: $bulletin_call_hex"
 
@@ -295,7 +298,9 @@ case "$1" in
     people_chain_endpoint=$5
     bulletin_chain_endpoint=$6
     account_to_authorize=$7
-    authorize_account_on_bulletin "$relay_url" "$relay_chain_seed" "$people_para_id" "$people_chain_endpoint" "$bulletin_chain_endpoint" "$account_to_authorize"
+    transactions=$8
+    bytes=$9
+    authorize_account_on_bulletin "$relay_url" "$relay_chain_seed" "$people_para_id" "$people_chain_endpoint" "$bulletin_chain_endpoint" "$account_to_authorize" "$transactions" "$bytes"
     ;;
   *)
     echo "A command is require. Supported commands for:

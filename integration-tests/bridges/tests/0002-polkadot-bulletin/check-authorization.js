@@ -8,13 +8,22 @@ async function run(nodeName, networkInfo, args) {
     while (true) {
         console.log(" Checking for authorization for a key: " + JSON.stringify(authorization_key) + " isAuthorized: " + isAuthorized);
         const authorization = await api.query.transactionStorage.authorizations(authorization_key);
+
         if (isAuthorized && authorization.isSome) {
-            console.log(" Ok - Found authorization for a key: " + JSON.stringify(authorization_key) + " : " + authorization);
-            return
+            const authorizationValue = authorization.unwrap();
+            console.log(" Ok - Found authorization for a key: " + JSON.stringify(authorization_key) + " : " + authorizationValue);
+            const expected_transactions = args.transactions;
+            if (expected_transactions === authorizationValue.transactions) {
+                console.log(" Ok - expected transaction count matched: " + expected_transactions);
+                return true
+            } else {
+                throw new Error("Invalid authorized transactions count! expected_transactions: " + expected_transactions + " actual: " + authorizationValue.extent.transactions);
+            }
         }
+
         if (!isAuthorized && authorization.isNone) {
             console.log(" Ok - Authorization not found for a key: " + JSON.stringify(authorization_key));
-            return
+            return true;
         }
 
         // else sleep and retry
