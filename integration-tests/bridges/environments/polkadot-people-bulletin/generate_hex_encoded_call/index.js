@@ -102,7 +102,7 @@ function bulletinTransactionStorageAuthorizeAccount(endpoint, outputFile, who, t
 	console.log(`Generating bulletinTransactionStorageAuthorizeAccount from RPC endpoint: ${endpoint} to outputFile: ${outputFile}, who: ${who}, transactions: ${transactions}, bytes: ${bytes}`);
 	connect(endpoint)
 		.then((api) => {
-			const call = api.tx.transactionStorage.authorizeAccount({ Account: who }, transactions, bytes);
+			const call = api.tx.transactionStorage.authorizeAccount(who, transactions, bytes);
 			writeHexEncodedBytesToOutput(call.method, outputFile);
 			exit(0);
 		})
