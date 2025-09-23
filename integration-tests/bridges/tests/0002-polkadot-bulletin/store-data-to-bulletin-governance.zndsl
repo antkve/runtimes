@@ -3,4 +3,4 @@ Network: {{ENV_PATH}}/polkadot_bulletin_local_network.toml
 Creds: config
 
 # Store data on Bulletin chain via governance XCM call from relay chain through People chain
-dave: run {{ENV_PATH}}/helper.sh with "auto-log store-data-to-bulletin ws://127.0.0.1:9942 //Alice 1004 ws://127.0.0.1:9910 ws://127.0.0.1:10000 {{DATA_FOR_BULLETIN}}" within 120 seconds
+alice: run {{ENV_PATH}}/helper.sh with "auto-log store-data-to-bulletin ws://127.0.0.1:9942 //Alice 1004 ws://127.0.0.1:9910 ws://127.0.0.1:10000 {{DATA_FOR_BULLETIN}}" within 120 seconds
