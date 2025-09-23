@@ -268,7 +268,7 @@ function authorize_account_on_bulletin() {
     local tmp_bulletin_call_file=$(mktemp)
     local tmp_people_call_file=$(mktemp)
 
-    generate_hex_encoded_call_data "bulletin-transaction-storage-authorize-account" "${bulletin_chain_endpoint}" "${tmp_bulletin_call_file}" "$account_to_authorize"
+    generate_hex_encoded_call_data "bulletin-transaction-storage-authorize-account" "${bulletin_chain_endpoint}" "${tmp_bulletin_call_file}" "$account_to_authorize" 1 512
     local bulletin_call_hex=$(cat $tmp_bulletin_call_file)
     echo "Generated Bulletin transactionStorage.authorizeAccount call: $bulletin_call_hex"
 

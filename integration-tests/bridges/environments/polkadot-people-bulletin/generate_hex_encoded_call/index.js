@@ -98,11 +98,11 @@ function bulletinTransactionStorageStore(endpoint, outputFile, data) {
 		});
 }
 
-function bulletinTransactionStorageAuthorizeAccount(endpoint, outputFile, who) {
-	console.log(`Generating bulletinTransactionStorageAuthorizeAccount from RPC endpoint: ${endpoint} to outputFile: ${outputFile}, who: ${who}`);
+function bulletinTransactionStorageAuthorizeAccount(endpoint, outputFile, who, transactions, bytes) {
+	console.log(`Generating bulletinTransactionStorageAuthorizeAccount from RPC endpoint: ${endpoint} to outputFile: ${outputFile}, who: ${who}, transactions: ${transactions}, bytes: ${bytes}`);
 	connect(endpoint)
 		.then((api) => {
-			const call = api.tx.transactionStorage.authorizeAccount({ Account: who });
+			const call = api.tx.transactionStorage.authorizeAccount({ Account: who }, transactions, bytes);
 			writeHexEncodedBytesToOutput(call.method, outputFile);
 			exit(0);
 		})
@@ -138,7 +138,7 @@ switch (type) {
 		bulletinTransactionStorageStore(rpcEndpoint, output, inputArgs[0]);
 		break;
 	case 'bulletin-transaction-storage-authorize-account':
-		bulletinTransactionStorageAuthorizeAccount(rpcEndpoint, output, inputArgs[0]);
+		bulletinTransactionStorageAuthorizeAccount(rpcEndpoint, output, inputArgs[0], inputArgs[1], inputArgs[2]);
 		break;
 	case 'check':
 		console.log(`Checking nodejs installation, if you see this everything is ready!`);
