@@ -23,13 +23,13 @@ bulletin_dir=`cat $TEST_DIR/bulletin.env`
 echo
 
 echo "--- Test 1: Add validator to bulletin via governance XCM ---"
-run_zndsl ${BASH_SOURCE%/*}/add-validator-to-bulletin.zndsl $polkadot_dir
+run_zndsl ${BASH_SOURCE%/*}/add-validator-to-bulletin.zndsl $bulletin_dir
 
 echo "--- Test 2: Authorize account on bulletin via governance XCM ---"
-run_zndsl ${BASH_SOURCE%/*}/authorize-account-on-bulletin.zndsl $polkadot_dir
+run_zndsl ${BASH_SOURCE%/*}/authorize-account-on-bulletin.zndsl $bulletin_dir
 
 echo "--- Test 3: Store data to bulletin via governance XCM ---"
-run_zndsl ${BASH_SOURCE%/*}/store-data-to-bulletin-governance.zndsl $polkadot_dir
+run_zndsl ${BASH_SOURCE%/*}/store-data-to-bulletin-governance.zndsl $bulletin_dir
 
 echo "All tests completed successfully!"
 echo "TODO: let's run forever and replace this with some asserts (wait for MessageProcessed...) in store-data-from-people.zndsl"
