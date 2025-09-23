@@ -31,8 +31,3 @@ echo "--- Test 3: Store data to bulletin with authorized account ---"
 run_zndsl ${BASH_SOURCE%/*}/store-data-to-bulletin.zndsl $bulletin_dir
 
 echo "All tests completed successfully!"
-echo "TODO: let's run forever and replace this with some asserts (wait for MessageProcessed...) in store-data-from-people.zndsl"
-
-while true; do
-  sleep 2
-done
