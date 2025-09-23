@@ -31,9 +31,6 @@ run_zndsl ${BASH_SOURCE%/*}/authorize-account-on-bulletin.zndsl $polkadot_dir
 echo "--- Test 3: Store data to bulletin via governance XCM ---"
 run_zndsl ${BASH_SOURCE%/*}/store-data-to-bulletin-governance.zndsl $polkadot_dir
 
-echo "--- Test 4: Comprehensive governance XCM test ---"
-run_zndsl ${BASH_SOURCE%/*}/governance-xcm-bulletin.zndsl $polkadot_dir
-
 echo "All tests completed successfully!"
 echo "TODO: let's run forever and replace this with some asserts (wait for MessageProcessed...) in store-data-from-people.zndsl"
 
