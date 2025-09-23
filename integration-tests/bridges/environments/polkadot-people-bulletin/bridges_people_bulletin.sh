@@ -3,6 +3,35 @@
 # import common functions
 source "$FRAMEWORK_PATH/utils/bridges.sh"
 
+function ensure_js_api() {
+    if ! which polkadot-js-api &> /dev/null; then
+        echo ''
+        echo 'Required command `polkadot-js-api` not in PATH, please, install, e.g.:'
+        echo "npm install -g @polkadot/api-cli@beta"
+        echo "      or"
+        echo "yarn global add @polkadot/api-cli"
+        echo ''
+        exit 1
+    fi
+    if ! which jq &> /dev/null; then
+        echo ''
+        echo 'Required command `jq` not in PATH, please, install, e.g.:'
+        echo "apt install -y jq"
+        echo ''
+        exit 1
+    fi
+    generate_hex_encoded_call_data "check" "--"
+    local retVal=$?
+    if [ $retVal -ne 0 ]; then
+        echo ""
+        echo ""
+        echo "-------------------"
+        echo "Installing (nodejs) sub module: ${BASH_SOURCE%/*}/generate_hex_encoded_call"
+        pushd ${BASH_SOURCE%/*}/generate_hex_encoded_call
+        npm install
+        popd
+    fi
+}
 
 function generate_hex_encoded_call_data() {
     local type=$1
@@ -13,7 +42,7 @@ function generate_hex_encoded_call_data() {
     shift
     echo "Input params: $@"
 
-    node ${FRAMEWORK_PATH%/*}/utils/generate_hex_encoded_call "$type" "$endpoint" "$output" "$@"
+    node ${BASH_SOURCE%/*}/generate_hex_encoded_call "$type" "$endpoint" "$output" "$@" 2>&1
     local retVal=$?
 
     if [ $type != "check" ]; then
@@ -163,8 +192,8 @@ function add_validator_to_bulletin() {
     echo "--------------------------------------------------"
 
     # Create temporary files for hex encoded data
-    local tmp_bulletin_call_file="/tmp/bulletin_add_validator_call.hex"
-    local tmp_people_call_file="/tmp/people_xcm_send_call.hex"
+    local tmp_bulletin_call_file=$(mktemp)
+    local tmp_people_call_file=$(mktemp)
 
     # Step 1: Generate hex encoded call for ValidatorSet::add on Bulletin chain
     generate_hex_encoded_call_data "add-bulletin-validator" "${bulletin_chain_endpoint}" "${tmp_bulletin_call_file}" "$validator_id"
@@ -184,40 +213,6 @@ function add_validator_to_bulletin() {
     rm -f "$tmp_bulletin_call_file" "$tmp_people_call_file"
 }
 
-function store_data_to_bulletin() {
-    local relay_url=$1
-    local relay_chain_seed=$2
-    local people_para_id=$3
-    local people_chain_endpoint=$4
-    local bulletin_chain_endpoint=$5
-    local data=$6
-    
-    echo "  calling store_data_to_bulletin:"
-    echo "      relay_url: ${relay_url}"
-    echo "      relay_chain_seed: ${relay_chain_seed}"
-    echo "      people_para_id: ${people_para_id}"
-    echo "      people_chain_endpoint: ${people_chain_endpoint}"
-    echo "      bulletin_chain_endpoint: ${bulletin_chain_endpoint}"
-    echo "      data: ${data}"
-    echo ""
-    echo "--------------------------------------------------"
-
-    local tmp_bulletin_call_file="/tmp/bulletin_storage_store_call.hex"
-    local tmp_people_call_file="/tmp/people_xcm_storage_store_call.hex"
-
-    generate_hex_encoded_call_data "bulletin-transaction-storage-store" "${bulletin_chain_endpoint}" "${tmp_bulletin_call_file}" "$data"
-    local bulletin_call_hex=$(cat $tmp_bulletin_call_file)
-    echo "Generated Bulletin transactionStorage.store call: $bulletin_call_hex"
-
-    generate_hex_encoded_call_data "people-xcm-send-to-bulletin" "${people_chain_endpoint}" "${tmp_people_call_file}" "$bulletin_call_hex"
-    local people_call_hex=$(cat $tmp_people_call_file)
-    echo "Generated People XCM send call: $people_call_hex"
-
-    send_governance_transact "${relay_url}" "${relay_chain_seed}" "${people_para_id}" "${people_call_hex}" 200000000 12000
-
-    rm -f "$tmp_bulletin_call_file" "$tmp_people_call_file"
-}
-
 function authorize_account_on_bulletin() {
     local relay_url=$1
     local relay_chain_seed=$2
@@ -225,7 +220,9 @@ function authorize_account_on_bulletin() {
     local people_chain_endpoint=$4
     local bulletin_chain_endpoint=$5
     local account_to_authorize=$6
-    
+    local transactions=$7
+    local bytes=$8
+
     echo "  calling authorize_account_on_bulletin:"
     echo "      relay_url: ${relay_url}"
     echo "      relay_chain_seed: ${relay_chain_seed}"
@@ -233,13 +230,14 @@ function authorize_account_on_bulletin() {
     echo "      people_chain_endpoint: ${people_chain_endpoint}"
     echo "      bulletin_chain_endpoint: ${bulletin_chain_endpoint}"
     echo "      account_to_authorize: ${account_to_authorize}"
-    echo ""
+    echo "      transactions: ${transactions}"
+    echo "      bytes: ${bytes}"
     echo "--------------------------------------------------"
 
-    local tmp_bulletin_call_file="/tmp/bulletin_authorize_account_call.hex"
-    local tmp_people_call_file="/tmp/people_xcm_authorize_account_call.hex"
+    local tmp_bulletin_call_file=$(mktemp)
+    local tmp_people_call_file=$(mktemp)
 
-    generate_hex_encoded_call_data "bulletin-transaction-storage-authorize-account" "${bulletin_chain_endpoint}" "${tmp_bulletin_call_file}" "$account_to_authorize"
+    generate_hex_encoded_call_data "bulletin-transaction-storage-authorize-account" "${bulletin_chain_endpoint}" "${tmp_bulletin_call_file}" "$account_to_authorize" "$transactions" "$bytes"
     local bulletin_call_hex=$(cat $tmp_bulletin_call_file)
     echo "Generated Bulletin transactionStorage.authorizeAccount call: $bulletin_call_hex"
 
@@ -282,15 +280,8 @@ case "$1" in
      data=$4
      send_data "$url" "$seed" "$data"
      ;;
-  store-data)
-    # TODO: replace with something useful
-    # store data on bulletin
-    url=$2
-    seed=$3
-    data=$4
-    store_data_with_bulletin "$url" "$seed" "$data"
-    ;;
   add-validator-to-bulletin)
+    ensure_js_api
     relay_url=$2
     relay_chain_seed=$3
     people_para_id=$4
@@ -299,23 +290,17 @@ case "$1" in
     validator_id=$7
     add_validator_to_bulletin "$relay_url" "$relay_chain_seed" "$people_para_id" "$people_chain_endpoint" "$bulletin_chain_endpoint" "$validator_id"
     ;;
-  store-data-to-bulletin)
-    relay_url=$2
-    relay_chain_seed=$3
-    people_para_id=$4
-    people_chain_endpoint=$5
-    bulletin_chain_endpoint=$6
-    data=$7
-    store_data_to_bulletin "$relay_url" "$relay_chain_seed" "$people_para_id" "$people_chain_endpoint" "$bulletin_chain_endpoint" "$data"
-    ;;
   authorize-account-on-bulletin)
+    ensure_js_api
     relay_url=$2
     relay_chain_seed=$3
     people_para_id=$4
     people_chain_endpoint=$5
     bulletin_chain_endpoint=$6
     account_to_authorize=$7
-    authorize_account_on_bulletin "$relay_url" "$relay_chain_seed" "$people_para_id" "$people_chain_endpoint" "$bulletin_chain_endpoint" "$account_to_authorize"
+    transactions=$8
+    bytes=$9
+    authorize_account_on_bulletin "$relay_url" "$relay_chain_seed" "$people_para_id" "$people_chain_endpoint" "$bulletin_chain_endpoint" "$account_to_authorize" "$transactions" "$bytes"
     ;;
   *)
     echo "A command is require. Supported commands for:
@@ -326,7 +311,6 @@ case "$1" in
           - init-people-polkadot-local
           - init-bulletin-local
           - add-validator-to-bulletin
-          - store-data-to-bulletin
           - authorize-account-on-bulletin
           - stop";
     exit 1
