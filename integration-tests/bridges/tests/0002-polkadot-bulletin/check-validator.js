@@ -2,12 +2,17 @@ async function run(nodeName, networkInfo, args) {
     const {wsUri, userDefinedTypes} = networkInfo.nodesByName[nodeName];
     const api = await zombie.connect(wsUri, userDefinedTypes);
 
+    const isPresent = args.isPresent;
     const validatorAddress = args.validatorAddress;
     while (true) {
-        console.log(new Date() + " Waiting for ValidatorSet containing: " + validatorAddress);
+        console.log(" Checking for ValidatorSet containing(isPresent=" + isPresent + "): address: " + validatorAddress);
         const validator = await api.query.validatorSet.validators(validatorAddress);
-        if (validator.isSome) {
-            console.log(new Date() + " Found validator: " + validatorAddress);
+        if (isPresent && validator.isSome) {
+            console.log(" Ok - Found validator: " + validatorAddress);
+            return
+        }
+        if (!isPresent && validator.isNone) {
+            console.log(" Ok - Validator not found: " + validatorAddress);
             return
         }
 
