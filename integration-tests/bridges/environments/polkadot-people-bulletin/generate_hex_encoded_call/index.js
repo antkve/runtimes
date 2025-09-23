@@ -84,20 +84,6 @@ function peopleXcmSendToBulletin(endpoint, outputFile, bulletin_xcm_call_hex) {
 		});
 }
 
-function bulletinTransactionStorageStore(endpoint, outputFile, data) {
-	console.log(`Generating bulletinTransactionStorageStore from RPC endpoint: ${endpoint} to outputFile: ${outputFile}, data: ${data}`);
-	connect(endpoint)
-		.then((api) => {
-			const call = api.tx.transactionStorage.store(data);
-			writeHexEncodedBytesToOutput(call.method, outputFile);
-			exit(0);
-		})
-		.catch((e) => {
-			console.error(e);
-			exit(1);
-		});
-}
-
 function bulletinTransactionStorageAuthorizeAccount(endpoint, outputFile, who, transactions, bytes) {
 	console.log(`Generating bulletinTransactionStorageAuthorizeAccount from RPC endpoint: ${endpoint} to outputFile: ${outputFile}, who: ${who}, transactions: ${transactions}, bytes: ${bytes}`);
 	connect(endpoint)
@@ -133,9 +119,6 @@ switch (type) {
 		break;
 	case 'people-xcm-send-to-bulletin':
 		peopleXcmSendToBulletin(rpcEndpoint, output, inputArgs[0]);
-		break;
-	case 'bulletin-transaction-storage-store':
-		bulletinTransactionStorageStore(rpcEndpoint, output, inputArgs[0]);
 		break;
 	case 'bulletin-transaction-storage-authorize-account':
 		bulletinTransactionStorageAuthorizeAccount(rpcEndpoint, output, inputArgs[0], inputArgs[1], inputArgs[2]);

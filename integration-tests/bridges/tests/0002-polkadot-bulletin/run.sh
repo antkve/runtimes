@@ -9,7 +9,6 @@ source "$FRAMEWORK_PATH/utils/common.sh"
 source "$FRAMEWORK_PATH/utils/zombienet.sh"
 
 export ENV_PATH=`realpath ${BASH_SOURCE%/*}/../../environments/polkadot-people-bulletin`
-export DATA_FOR_BULLETIN="0x48656c6c6f20576f726c64"  # "Hello World" in hex
 
 $ENV_PATH/spawn.sh --init --start-relayer &
 env_pid=$!
@@ -28,8 +27,8 @@ run_zndsl ${BASH_SOURCE%/*}/add-validator-to-bulletin.zndsl $bulletin_dir
 echo "--- Test 2: Authorize account on bulletin via governance XCM ---"
 run_zndsl ${BASH_SOURCE%/*}/authorize-account-on-bulletin.zndsl $bulletin_dir
 
-echo "--- Test 3: Store data to bulletin via governance XCM ---"
-run_zndsl ${BASH_SOURCE%/*}/store-data-to-bulletin-governance.zndsl $bulletin_dir
+echo "--- Test 3: Store data to bulletin with authorized account ---"
+run_zndsl ${BASH_SOURCE%/*}/store-data-to-bulletin.zndsl $bulletin_dir
 
 echo "All tests completed successfully!"
 echo "TODO: let's run forever and replace this with some asserts (wait for MessageProcessed...) in store-data-from-people.zndsl"
