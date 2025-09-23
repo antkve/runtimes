@@ -2,17 +2,18 @@ async function run(nodeName, networkInfo, args) {
     const {wsUri, userDefinedTypes} = networkInfo.nodesByName[nodeName];
     const api = await zombie.connect(wsUri, userDefinedTypes);
 
-    const isPresent = args.isPresent;
-    const validatorAddress = args.validatorAddress;
+    const isAuthorized = args.isAuthorized;
+    const account = args.account;
+    const authorization_key = { Account: account };
     while (true) {
-        console.log(new Date() + " Checking for ValidatorSet containing(isPresent=" + isPresent + "): " + validatorAddress);
-        const validator = await api.query.validatorSet.validators(validatorAddress);
-        if (isPresent && validator.isSome) {
-            console.log(new Date() + " Ok - Found validator: " + validatorAddress);
+        console.log(" Checking for authorization for a key: " + authorization_key + " isAuthorized: " + isAuthorized);
+        const authorization = await api.query.transactionStorage.authorizations(authorization_key);
+        if (isAuthorized && authorization.isSome) {
+            console.log(" Ok - Found authorization for a key: " + authorization_key + " : " + authorization);
             return
         }
-        if (!isPresent && validator.isNone) {
-            console.log(new Date() + " Ok - Validator not found: " + validatorAddress);
+        if (!isAuthorized && authorization.isNone) {
+            console.log(" Ok - Authorization not found for a key: " + authorization_key);
             return
         }
 
