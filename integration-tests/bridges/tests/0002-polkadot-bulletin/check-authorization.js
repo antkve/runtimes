@@ -6,14 +6,14 @@ async function run(nodeName, networkInfo, args) {
     const account = args.account;
     const authorization_key = { Account: account };
     while (true) {
-        console.log(" Checking for authorization for a key: " + authorization_key + " isAuthorized: " + isAuthorized);
+        console.log(" Checking for authorization for a key: " + JSON.stringify(authorization_key) + " isAuthorized: " + isAuthorized);
         const authorization = await api.query.transactionStorage.authorizations(authorization_key);
         if (isAuthorized && authorization.isSome) {
-            console.log(" Ok - Found authorization for a key: " + authorization_key + " : " + authorization);
+            console.log(" Ok - Found authorization for a key: " + JSON.stringify(authorization_key) + " : " + authorization);
             return
         }
         if (!isAuthorized && authorization.isNone) {
-            console.log(" Ok - Authorization not found for a key: " + authorization_key);
+            console.log(" Ok - Authorization not found for a key: " + JSON.stringify(authorization_key));
             return
         }
 

@@ -8,7 +8,7 @@ async function run(nodeName, networkInfo, args) {
         console.log(" Checking for ValidatorSet containing(isPresent=" + isPresent + "): address: " + validatorAddress);
         const validator = await api.query.validatorSet.validators(validatorAddress);
         if (isPresent && validator.isSome) {
-            console.log(" Ok - Found validator: " + validatorAddress);
+            console.log(" Ok - Found validator: " + JSON.stringify(validator));
             return true;
         }
         if (!isPresent && validator.isNone) {
