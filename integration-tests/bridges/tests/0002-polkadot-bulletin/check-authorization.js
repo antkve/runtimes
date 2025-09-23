@@ -12,13 +12,13 @@ async function run(nodeName, networkInfo, args) {
         if (isAuthorized && authorization.isSome) {
             const authorizationValue = authorization.unwrap();
             console.log(" Ok - Found authorization for a key: " + JSON.stringify(authorization_key) + " : " + authorizationValue);
-            const expected_transactions = args.transactions;
-            const actualTransactions = authorizationValue.extent.transactions;
-            if (expected_transactions === actualTransactions) {
-                console.log(" Ok - expected transaction count matched: " + expected_transactions);
+            const expectedTransactions = BigInt(args.transactions);
+            const actualTransactions = authorizationValue.extent.transactions.toBigInt();
+            if (expectedTransactions === actualTransactions) {
+                console.log(" Ok - expected transaction count matched: " + expectedTransactions);
                 return true
             } else {
-                throw new Error("Invalid authorized transactions count! expected_transactions: " + expected_transactions + " actual: " + actualTransactions);
+                throw new Error("Invalid authorized transactions count! expectedTransactions: " + expectedTransactions + " actual: " + actualTransactions);
             }
         }
 
