@@ -62,10 +62,6 @@ function peopleXcmSendToBulletin(endpoint, outputFile, bulletin_xcm_call_hex) {
 					{
 						"Transact": {
 							"origin_kind": "Superuser",
-							"require_weight_at_most": {
-								"ref_time": "200000000",
-								"proof_size": "12000"
-							},
 							"call": {
 								"encoded": JSON.parse(bulletin_xcm_call_hex)
 							}
