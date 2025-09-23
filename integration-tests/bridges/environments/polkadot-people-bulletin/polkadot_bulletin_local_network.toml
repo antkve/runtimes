@@ -7,12 +7,12 @@ chain = "polkadot-local"
 default_command = "{{POLKADOT_BULLETIN_BINARY_PATH}}"
 
 	[[relaychain.nodes]]
-	name = "alice-bulletin"
+	name = "dave"
 	rpc_port = 10000
 	validator = true
 	args = [ "--ipfs-server", "-lruntime=trace,runtime::bridge-hub=trace,runtime::bridge=trace,runtime::bridge-dispatch=trace,bridge=trace,runtime::bridge-messages=trace,runtime::xcm=trace,xcm=trace" ]
 
 	[[relaychain.nodes]]
-	name = "bob-bulletin"
+	name = "ferdie"
 	rpc_port = 10001
 	validator = true
