@@ -1,0 +1,12 @@
+Description: Governance call to authorize runtime upgrade on Bulletin via People chain XCM
+Network: {{ENV_PATH}}/polkadot_bulletin_local_network.toml
+Creds: config
+
+# Check current authorized upgrade state (should be none initially)
+alice: js-script ./check-authorized-upgrade.js with '{}' within 30 seconds
+
+# Authorize runtime upgrade with dummy code hash on Bulletin chain via governance XCM call from relay chain through People chain
+alice: run {{ENV_PATH}}/helper.sh with "auto-log authorize-upgrade-bulletin ws://127.0.0.1:9942 //Alice 1004 ws://127.0.0.1:9910 ws://127.0.0.1:10000 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" within 120 seconds
+
+# Check/wait that the upgrade is authorized with the correct code hash
+alice: js-script ./check-authorized-upgrade.js with '{ "codeHash": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" }' within 120 seconds
