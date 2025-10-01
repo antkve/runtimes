@@ -4,15 +4,15 @@ async function run(nodeName, networkInfo, args) {
 
     const expectedCodeHash = args.codeHash;
     
-    console.log(" Checking for authorized upgrade... expectedCodeHash: " + expectedCodeHash);
     while (true) {
+        console.log(" Checking for authorized upgrade... expectedCodeHash: " + expectedCodeHash);
         const authorizedUpgrade = await api.query.system.authorizedUpgrade();
 
         if (expectedCodeHash && authorizedUpgrade.isSome) {
-            const authorizedCodeHash = authorizedUpgrade.unwrap();
-            console.log(" Found authorized upgrade with codeHash: " + authorizedCodeHash);
+            const authorization = authorizedUpgrade.unwrap();
+            console.log(" Found authorization with codeHash: " + authorization);
 
-            if (expectedCodeHash === authorizedCodeHash.toString()) {
+            if (expectedCodeHash === authorization.codeHash) {
                 console.log(" Ok - Expected code hash matched: " + expectedCodeHash);
                 return true;
             }
