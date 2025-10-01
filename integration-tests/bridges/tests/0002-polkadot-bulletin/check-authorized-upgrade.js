@@ -12,7 +12,7 @@ async function run(nodeName, networkInfo, args) {
             const authorization = authorizedUpgrade.unwrap();
             console.log(" Found authorization with codeHash: " + authorization);
 
-            if (expectedCodeHash === authorization.codeHash) {
+            if (expectedCodeHash === authorization.codeHash.toString()) {
                 console.log(" Ok - Expected code hash matched: " + expectedCodeHash);
                 return true;
             }
