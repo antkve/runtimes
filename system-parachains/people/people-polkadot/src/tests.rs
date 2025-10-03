@@ -15,22 +15,136 @@
 // limitations under the License.
 
 use crate::{
-	xcm_config::{GovernanceLocation, LocationToAccountId},
-	Block, Runtime, RuntimeCall, RuntimeOrigin, WeightToFee,
+	bridge_to_bulletin_config::{
+		BridgeGrandpaPolkadotBulletinInstance, BridgeRelayersInstance,
+		PolkadotBulletinGlobalConsensusNetworkLocation, WithPolkadotBulletinMessagesInstance,
+		XcmOverPolkadotBulletinInstance,
+	},
+	xcm_config::XcmConfig,
+	xcm_config::{GovernanceLocation, LocationToAccountId, RelayLocation},
+	AllPalletsWithoutSystem, AuraId, Block, ExistentialDeposit, ParachainSystem, PolkadotXcm,
+	Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, SessionKeys, System, WeightToFee,
+	SLOT_DURATION,
 };
-use cumulus_primitives_core::relay_chain::AccountId;
+use bp_messages::LegacyLaneId;
+use bridge_hub_test_utils::{test_cases::from_grandpa_chain, ExtBuilder, SlotDurations};
+use codec::Decode;
+use frame_support::parameter_types;
+use frame_support::traits::ConstU8;
+use parachains_common::AccountId;
+use sp_consensus_aura::SlotDuration;
 use sp_core::crypto::Ss58Codec;
-use xcm::prelude::*;
+use system_parachains_constants::polkadot::consensus::RELAY_CHAIN_SLOT_DURATION_MILLIS;
+use xcm::{latest::prelude::*, VersionedXcm};
 use xcm_runtime_apis::conversions::LocationToAccountHelper;
 
 use frame_support::{assert_err, assert_ok};
 use parachains_runtimes_test_utils::GovernanceOrigin;
+use sp_keyring::Sr25519Keyring::Alice;
 use sp_runtime::Either;
 
-const ALICE: [u8; 32] = [1u8; 32];
+// Para id of sibling chain used in tests.
+pub const SIBLING_PARACHAIN_ID: u32 = 1000;
+
+parameter_types! {
+	pub PeopleLocation: Location = Here.into();
+	pub BridgedUniversalLocation: InteriorLocation = [GlobalConsensus(bp_polkadot_bulletin::PolkadotBulletinGlobalConsensusNetwork::get())].into();
+	pub TestNetworkId: NetworkId = NetworkId::Polkadot;
+}
+
+fn collator_session_keys() -> bridge_hub_test_utils::CollatorSessionKeys<Runtime> {
+	bridge_hub_test_utils::CollatorSessionKeys::new(
+		AccountId::from(Alice),
+		AccountId::from(Alice),
+		SessionKeys { aura: AuraId::from(Alice.public()) },
+	)
+}
+
+fn slot_durations() -> SlotDurations {
+	SlotDurations {
+		relay: SlotDuration::from_millis(RELAY_CHAIN_SLOT_DURATION_MILLIS.into()),
+		para: SlotDuration::from_millis(SLOT_DURATION),
+	}
+}
+
+// TODO: we don't need ExportMessage - maybe for governance calls, but then we need to set up MessageExporter
+#[test]
+fn handle_export_message_from_system_parachain_add_to_outbound_queue_works() {
+	bridge_hub_test_utils::test_cases::handle_export_message_from_system_parachain_to_outbound_queue_works::<
+		Runtime,
+		XcmConfig,
+		WithPolkadotBulletinMessagesInstance,
+	>(
+		collator_session_keys(),
+		polkadot_runtime_constants::system_parachain::PEOPLE_ID,
+		SIBLING_PARACHAIN_ID,
+		Box::new(|runtime_event_encoded: Vec<u8>| {
+			match RuntimeEvent::decode(&mut &runtime_event_encoded[..]) {
+				Ok(RuntimeEvent::BridgePolkadotBulletinMessages(event)) => Some(event),
+				_ => None,
+			}
+		}),
+		|| ExportMessage { network: bp_polkadot_bulletin::PolkadotBulletinGlobalConsensusNetwork::get(), destination: Here.into(), xcm: Xcm(vec![]) },
+		Some((Location::parent(), ExistentialDeposit::get()).into()),
+		Some((Location::parent(), 1_000_000_000).into()),
+		|| {
+			PolkadotXcm::force_xcm_version(RuntimeOrigin::root(), Box::new(PolkadotBulletinGlobalConsensusNetworkLocation::get()), XCM_VERSION).expect("version saved!");
+
+			bridge_hub_test_utils::ensure_opened_bridge::<
+				Runtime,
+				XcmOverPolkadotBulletinInstance,
+				LocationToAccountId,
+				RelayLocation,
+			>(
+				Here.into(),
+				BridgedUniversalLocation::get(),
+				false,
+				|locations, _fee| {
+					bridge_hub_test_utils::open_bridge_with_storage::<
+						Runtime,
+						XcmOverPolkadotBulletinInstance
+					>(locations, LegacyLaneId([0, 0, 0, 1]))
+				}
+			).1
+		},
+	)
+}
+
+#[test]
+fn message_dispatch_routing_works() {
+	bridge_hub_test_utils::test_cases::message_dispatch_routing_works::<
+		Runtime,
+		AllPalletsWithoutSystem,
+		XcmConfig,
+		ParachainSystem,
+		WithPolkadotBulletinMessagesInstance,
+		TestNetworkId,
+		bp_polkadot_bulletin::PolkadotBulletinGlobalConsensusNetwork,
+		ConstU8<2>,
+	>(
+		collator_session_keys(),
+		slot_durations(),
+		polkadot_runtime_constants::system_parachain::PEOPLE_ID,
+		SIBLING_PARACHAIN_ID,
+		Box::new(|runtime_event_encoded: Vec<u8>| {
+			match RuntimeEvent::decode(&mut &runtime_event_encoded[..]) {
+				Ok(RuntimeEvent::ParachainSystem(event)) => Some(event),
+				_ => None,
+			}
+		}),
+		Box::new(|runtime_event_encoded: Vec<u8>| {
+			match RuntimeEvent::decode(&mut &runtime_event_encoded[..]) {
+				Ok(RuntimeEvent::XcmpQueue(event)) => Some(event),
+				_ => None,
+			}
+		}),
+		|| (),
+	)
+}
 
 #[test]
 fn location_conversion_works() {
+	const ALICE: [u8; 32] = [1u8; 32];
 	let alice_32 = AccountId32 { network: None, id: AccountId::from(ALICE).into() };
 	let bob_20 = AccountKey20 { network: None, key: [123u8; 20] };
 
@@ -189,4 +303,132 @@ fn governance_authorize_upgrade_works() {
 		Runtime,
 		RuntimeOrigin,
 	>(GovernanceOrigin::Location(GovernanceLocation::get())));
+}
+
+type GrandpaRuntimeTestsAdapter = from_grandpa_chain::WithRemoteGrandpaChainHelperAdapter<
+	Runtime,
+	AllPalletsWithoutSystem,
+	BridgeGrandpaPolkadotBulletinInstance,
+	WithPolkadotBulletinMessagesInstance,
+	BridgeRelayersInstance,
+>;
+
+#[test]
+fn relayed_incoming_message_works() {
+	from_grandpa_chain::relayed_incoming_message_works::<GrandpaRuntimeTestsAdapter>(
+		collator_session_keys(),
+		slot_durations(),
+		polkadot_runtime_constants::system_parachain::PEOPLE_ID,
+		1000,
+		// Bulletin relay chain id
+		NetworkId::PolkadotBulletin,
+		|| {
+			bridge_hub_test_utils::ensure_opened_bridge::<
+				Runtime,
+				XcmOverPolkadotBulletinInstance,
+				LocationToAccountId,
+				RelayLocation,
+			>(
+				PeopleLocation::get(),
+				BridgedUniversalLocation::get(),
+				false,
+				|locations, _fee| {
+					bridge_hub_test_utils::open_bridge_with_storage::<
+						Runtime,
+						XcmOverPolkadotBulletinInstance,
+					>(locations, LegacyLaneId([0, 0, 0, 1]))
+				},
+			)
+			.1
+		},
+		|_relayer_at_target, _call| Ok(()),
+		true,
+	);
+}
+
+#[test]
+fn free_relay_extrinsic_works() {
+	from_grandpa_chain::free_relay_extrinsic_works::<GrandpaRuntimeTestsAdapter>(
+		collator_session_keys(),
+		slot_durations(),
+		polkadot_runtime_constants::system_parachain::PEOPLE_ID,
+		0, // Bulletin relay chain id
+		NetworkId::PolkadotBulletin,
+		|| {
+			// Initialize bridge state for GRANDPA chain tests
+			bridge_hub_test_utils::ensure_opened_bridge::<
+				Runtime,
+				XcmOverPolkadotBulletinInstance,
+				LocationToAccountId,
+				RelayLocation,
+			>(
+				PeopleLocation::get(),
+				BridgedUniversalLocation::get(),
+				false,
+				|locations, _fee| {
+					bridge_hub_test_utils::open_bridge_with_storage::<
+						Runtime,
+						XcmOverPolkadotBulletinInstance,
+					>(locations, LegacyLaneId([0, 0, 0, 1]))
+				},
+			)
+			.1
+		},
+		|_relayer_at_target, _call| Ok(()),
+		true,
+	);
+}
+
+#[test]
+fn bulletin_router_works() {
+	ExtBuilder::<Runtime>::default()
+		.with_collators(collator_session_keys().collators())
+		.with_session_keys(collator_session_keys().session_keys())
+		.with_tracing()
+		.build()
+		.execute_with(|| {
+			// Err - no bridge opened
+			assert_err!(
+				PolkadotXcm::send(
+					RuntimeOrigin::signed(AccountId::from(Alice)),
+					Box::new(PolkadotBulletinGlobalConsensusNetworkLocation::get().into()),
+					Box::new(VersionedXcm::from(Xcm(vec![])))
+				),
+				pallet_xcm::Error::<Runtime>::Unreachable
+			);
+
+			// open the PoP bridge
+			let expected_lane_id = LegacyLaneId([0, 0, 0, 1]);
+			bridge_hub_test_utils::ensure_opened_bridge::<
+				Runtime,
+				XcmOverPolkadotBulletinInstance,
+				LocationToAccountId,
+				RelayLocation,
+			>(
+				PeopleLocation::get(),
+				BridgedUniversalLocation::get(),
+				false,
+				|locations, _fee| {
+					bridge_hub_test_utils::open_bridge_with_storage::<
+						Runtime,
+						XcmOverPolkadotBulletinInstance,
+					>(locations, expected_lane_id)
+				},
+			);
+
+			// Ok
+			assert_ok!(PolkadotXcm::send(
+				RuntimeOrigin::signed(AccountId::from(Alice)),
+				Box::new(PolkadotBulletinGlobalConsensusNetworkLocation::get().into()),
+				Box::new(VersionedXcm::from(Xcm(vec![])))
+			));
+			// Assert that some message is ready for bridging
+			System::assert_has_event(
+				pallet_bridge_messages::Event::MessageAccepted {
+					lane_id: expected_lane_id,
+					nonce: 1,
+				}
+				.into(),
+			);
+		})
 }

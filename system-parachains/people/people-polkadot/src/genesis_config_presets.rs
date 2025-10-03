@@ -17,8 +17,11 @@
 //! Genesis configs presets for the PeoplePolkadot runtime
 
 use crate::*;
+use sp_core::sr25519;
 use sp_genesis_builder::PresetId;
 use system_parachains_constants::genesis_presets::*;
+use xcm::latest::prelude::*;
+use xcm::prelude::InteriorLocation;
 
 const PEOPLE_POLKADOT_ED: Balance = ExistentialDeposit::get();
 
@@ -26,6 +29,8 @@ fn people_polkadot_genesis(
 	invulnerables: Vec<(AccountId, parachains_common::AuraId)>,
 	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
+	bridge_owner: Option<AccountId>,
+	opened_bridges: Vec<(Location, InteriorLocation, Option<bp_messages::LegacyLaneId>)>,
 ) -> serde_json::Value {
 	serde_json::json!({
 		"balances": BalancesConfig {
@@ -61,13 +66,33 @@ fn people_polkadot_genesis(
 		"polkadotXcm": {
 			"safeXcmVersion": Some(SAFE_XCM_VERSION),
 		},
+		"bridgePolkadotBulletinGrandpa": BridgePolkadotBulletinGrandpaConfig {
+			owner: bridge_owner,
+			..Default::default()
+		},
+		"xcmOverPolkadotBulletin": XcmOverPolkadotBulletinConfig { opened_bridges, ..Default::default() }
+
 		// no need to pass anything to aura, in fact it will panic if we do. Session will take care
 		// of this. `aura: Default::default()`
 	})
 }
 
 pub fn people_polkadot_local_testnet_genesis(para_id: ParaId) -> serde_json::Value {
-	people_polkadot_genesis(invulnerables(), testnet_accounts(), para_id)
+	people_polkadot_genesis(
+		invulnerables(),
+		testnet_accounts(),
+		para_id,
+		Some(get_account_id_from_seed::<sr25519::Public>("Alice")),
+		vec![
+			(
+				Location::here(),
+				Junctions::from([
+					GlobalConsensus(bp_polkadot_bulletin::PolkadotBulletinGlobalConsensusNetwork::get()),
+				]),
+				Some(bp_messages::LegacyLaneId([0, 0, 0, 0])),
+			),
+		],
+	)
 }
 
 fn people_polkadot_development_genesis(para_id: ParaId) -> serde_json::Value {
@@ -78,6 +103,8 @@ fn people_polkadot_development_genesis(para_id: ParaId) -> serde_json::Value {
 			StakingPot::get(),
 		]),
 		para_id,
+		None,
+		vec![],
 	)
 }
 
@@ -93,8 +120,9 @@ pub fn preset_names() -> Vec<PresetId> {
 pub fn get_preset(id: &PresetId) -> Option<Vec<u8>> {
 	let patch = match id.as_ref() {
 		sp_genesis_builder::DEV_RUNTIME_PRESET => people_polkadot_development_genesis(1004.into()),
-		sp_genesis_builder::LOCAL_TESTNET_RUNTIME_PRESET =>
-			people_polkadot_local_testnet_genesis(1004.into()),
+		sp_genesis_builder::LOCAL_TESTNET_RUNTIME_PRESET => {
+			people_polkadot_local_testnet_genesis(1004.into())
+		},
 		_ => return None,
 	};
 	Some(
