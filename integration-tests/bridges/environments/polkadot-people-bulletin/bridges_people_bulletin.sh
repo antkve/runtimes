@@ -251,6 +251,40 @@ function authorize_account_on_bulletin() {
     rm -f "$tmp_bulletin_call_file" "$tmp_people_call_file"
 }
 
+function authorize_upgrade_bulletin() {
+    local relay_url=$1
+    local relay_chain_seed=$2
+    local people_para_id=$3
+    local people_chain_endpoint=$4
+    local bulletin_chain_endpoint=$5
+    local code_hash=$6
+
+    echo "  calling authorize_upgrade_bulletin:"
+    echo "      relay_url: ${relay_url}"
+    echo "      relay_chain_seed: ${relay_chain_seed}"
+    echo "      people_para_id: ${people_para_id}"
+    echo "      people_chain_endpoint: ${people_chain_endpoint}"
+    echo "      bulletin_chain_endpoint: ${bulletin_chain_endpoint}"
+    echo "      code_hash: ${code_hash}"
+    echo "--------------------------------------------------"
+
+    local tmp_bulletin_call_file=$(mktemp)
+    local tmp_people_call_file=$(mktemp)
+
+    generate_hex_encoded_call_data "bulletin-system-authorize-upgrade" "${bulletin_chain_endpoint}" "${tmp_bulletin_call_file}" "$code_hash"
+    local bulletin_call_hex=$(cat $tmp_bulletin_call_file)
+    echo "Generated Bulletin system.authorizeUpgrade call: $bulletin_call_hex"
+
+    generate_hex_encoded_call_data "people-xcm-send-to-bulletin" "${people_chain_endpoint}" "${tmp_people_call_file}" "$bulletin_call_hex"
+    local people_call_hex=$(cat $tmp_people_call_file)
+    echo "Generated People XCM send call: $people_call_hex"
+
+    send_governance_transact "${relay_url}" "${relay_chain_seed}" "${people_para_id}" "${people_call_hex}" 200000000 12000
+
+    # Clean up temporary files
+    rm -f "$tmp_bulletin_call_file" "$tmp_people_call_file"
+}
+
 case "$1" in
   run-finality-relay)
     init_bulletin_polkadot
@@ -302,6 +336,16 @@ case "$1" in
     bytes=$9
     authorize_account_on_bulletin "$relay_url" "$relay_chain_seed" "$people_para_id" "$people_chain_endpoint" "$bulletin_chain_endpoint" "$account_to_authorize" "$transactions" "$bytes"
     ;;
+  authorize-upgrade-bulletin)
+    ensure_js_api
+    relay_url=$2
+    relay_chain_seed=$3
+    people_para_id=$4
+    people_chain_endpoint=$5
+    bulletin_chain_endpoint=$6
+    code_hash=$7
+    authorize_upgrade_bulletin "$relay_url" "$relay_chain_seed" "$people_para_id" "$people_chain_endpoint" "$bulletin_chain_endpoint" "$code_hash"
+    ;;
   *)
     echo "A command is require. Supported commands for:
     Local (zombienet) run:
@@ -312,6 +356,7 @@ case "$1" in
           - init-bulletin-local
           - add-validator-to-bulletin
           - authorize-account-on-bulletin
+          - authorize-upgrade-bulletin
           - stop";
     exit 1
     ;;

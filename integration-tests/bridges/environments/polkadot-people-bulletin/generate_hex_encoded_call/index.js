@@ -94,6 +94,20 @@ function bulletinTransactionStorageAuthorizeAccount(endpoint, outputFile, who, t
 		});
 }
 
+function bulletinSystemAuthorizeUpgrade(endpoint, outputFile, codeHash) {
+	console.log(`Generating bulletinSystemAuthorizeUpgrade from RPC endpoint: ${endpoint} to outputFile: ${outputFile}, codeHash: ${codeHash}`);
+	connect(endpoint)
+		.then((api) => {
+			const call = api.tx.system.authorizeUpgrade(codeHash);
+			writeHexEncodedBytesToOutput(call.method, outputFile);
+			exit(0);
+		})
+		.catch((e) => {
+			console.error(e);
+			exit(1);
+		});
+}
+
 if (!process.argv[2] || !process.argv[3]) {
 	console.log("usage: node ./script/generate_hex_encoded_call <type> <endpoint> <output hex-encoded data file> <input message>");
 	exit(1);
@@ -118,6 +132,9 @@ switch (type) {
 		break;
 	case 'bulletin-transaction-storage-authorize-account':
 		bulletinTransactionStorageAuthorizeAccount(rpcEndpoint, output, inputArgs[0], inputArgs[1], inputArgs[2]);
+		break;
+	case 'bulletin-system-authorize-upgrade':
+		bulletinSystemAuthorizeUpgrade(rpcEndpoint, output, inputArgs[0]);
 		break;
 	case 'check':
 		console.log(`Checking nodejs installation, if you see this everything is ready!`);
