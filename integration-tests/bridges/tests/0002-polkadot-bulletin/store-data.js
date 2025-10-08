@@ -6,7 +6,18 @@ async function run(nodeName, networkInfo, args) {
 
     // account to submit tx
     const authorizedAccountSeed = args.authorizedAccountSeed;
-    const data = args.data;
+    const inputData = args.data;
+    
+    // Convert string to hex if it's not already hex
+    let data;
+    if (inputData.startsWith('0x')) {
+        data = inputData;
+    } else {
+        // Convert string to hex
+        data = '0x' + Buffer.from(inputData, 'utf8').toString('hex');
+        console.log(`Converting string "${inputData}" to hex: ${data}`);
+    }
+    
     const keyring = new zombie.Keyring({ type: "sr25519" });
     const authorizedAccount = keyring.addFromUri(authorizedAccountSeed);
 

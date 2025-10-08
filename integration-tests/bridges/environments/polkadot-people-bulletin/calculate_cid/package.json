@@ -1,0 +1,14 @@
+{
+  "name": "calculate-cid",
+  "version": "1.0.0",
+  "description": "Calculate IPFS CID for data to be stored in transaction-storage pallet",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "@polkadot/util-crypto": "^13.1",
+    "multihashes": "^4.0.3",
+    "cids": "^1.1.9"
+  }
+}
+
+
