@@ -36,4 +36,7 @@ run_zndsl ${BASH_SOURCE%/*}/store-data-to-bulletin.zndsl $bulletin_dir
 echo "--- Test 4: Verify stored data is available via IPFS ---"
 run_zndsl ${BASH_SOURCE%/*}/verify-ipfs-storage.zndsl $bulletin_dir
 
+echo "--- Test 5: Authorize runtime upgrade on bulletin via governance XCM ---"
+run_zndsl ${BASH_SOURCE%/*}/authorize-upgrade-bulletin.zndsl $bulletin_dir
+
 echo "All tests completed successfully!"
