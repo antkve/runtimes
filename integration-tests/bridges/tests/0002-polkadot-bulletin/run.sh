@@ -21,6 +21,9 @@ ensure_process_file $env_pid $TEST_DIR/bulletin.env 300
 bulletin_dir=`cat $TEST_DIR/bulletin.env`
 echo
 
+echo "--- Setup: Ensure CID calculator dependencies are installed ---"
+${BASH_SOURCE%/*}/setup-cid-calculator.sh
+
 echo "--- Test 1: Add validator to bulletin via governance XCM ---"
 run_zndsl ${BASH_SOURCE%/*}/add-validator-to-bulletin.zndsl $bulletin_dir
 
@@ -29,5 +32,8 @@ run_zndsl ${BASH_SOURCE%/*}/authorize-account-on-bulletin.zndsl $bulletin_dir
 
 echo "--- Test 3: Store data to bulletin with authorized account ---"
 run_zndsl ${BASH_SOURCE%/*}/store-data-to-bulletin.zndsl $bulletin_dir
+
+echo "--- Test 4: Verify stored data is available via IPFS ---"
+run_zndsl ${BASH_SOURCE%/*}/verify-ipfs-storage.zndsl $bulletin_dir
 
 echo "All tests completed successfully!"
